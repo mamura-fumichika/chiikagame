@@ -6,14 +6,10 @@
    <audio id="bgm1" src="ひとりごつ.mp3" ></audio>
   <audio id="bgm2" src="パジャマパーティーズのうた.mp3" ></audio>
   <audio id="mergeSound" src="けだま.m4a" preload="auto"></audio>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 
   <style>
     body {
       margin: 0;
-      padding:0;
-      height:100%;
       background: #caedf8;
       overflow: hidden;
     }
@@ -23,19 +19,6 @@
       background: #05f019;
       border: 2px solid #333;
     }
-
-#container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-    #gameCanvas {
-  flex: 1 1 auto;
-  width: 100%;
-  background: #fefefe;
-  border: 2px solid #333;
-}
-
     #ui {
       position: absolute;
       top: 10px;
@@ -84,14 +67,17 @@
   text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
 }
 #evolutionChart {
-  flex: 0 0 auto;
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  justify-content: center;
   align-items: center;
   gap: 8px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  border-top: 2px solid #ccc;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 6px 12px;
+  border-radius: 8px;
+  z-index: 10;
 }
 
 .evo-icon {
@@ -103,26 +89,6 @@
 .evo-arrow {
   font-size: 20px;
   color: #555;
-}
-
-.evo-icon {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-.evo-arrow {
-  font-size: 20px;
-  color: #555;
-}
-
-#score {
-  font-size: 5vw;
-}
-
-#gameOverText {
-  font-size: 8vw;
-  padding: 4vw 6vw;
 }
 
 
@@ -137,11 +103,6 @@
   </div>
   <div id="gameOverText">討伐失敗！</div>
   <div id="evolutionChart"></div>
-  <div id="container">
-  <canvas id="gameCanvas"></canvas>
-  <div id="evolutionChart"></div>
-</div>
-
 
   <canvas id="nextCanvas" width="80" height="80"></canvas>
   <canvas id="gameCanvas" width="400" height="600"></canvas>
@@ -150,8 +111,8 @@
   <script>
     const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
 
-    
-
+    const width = 400;
+    const height = 600;
     const gameOverY = 50;
 
     const fruitTypes = [
@@ -171,7 +132,16 @@
     const engine = Engine.create();
     const world = engine.world;
 
-    
+    const render = Render.create({
+      canvas: document.getElementById('gameCanvas'),
+      engine: engine,
+      options: {
+        width,
+        height,
+        wireframes: false,
+        background: '#d0f0c0'
+      }
+    });
 
     const bgm1 = document.getElementById('bgm1');
 const bgm2 = document.getElementById('bgm2');
@@ -210,36 +180,13 @@ document.addEventListener('click', () => {
 });
 
 
-const canvas = document.getElementById('gameCanvas');
-const chartHeight = 80; // 進化チャートの高さ（px）
-
-const width = window.innerWidth;
-const height = window.innerHeight - chartHeight;
-
-canvas.width = width;
-canvas.height = height;
-
-const render = Render.create({
-  canvas: canvas,
-  engine: engine,
-  options: {
-    width: width,
-    height: height,
-    wireframes: false,
-    background: '#fefefe'
-  }
-});
-
-
     Render.run(render);
     const runner = Runner.create();
     Runner.run(runner, engine);
 
     const ground = Bodies.rectangle(width / 2, height + 25, width, 50, { isStatic: true });
-const leftWall = Bodies.rectangle(-25, height / 2, 50, height, { isStatic: true });
-const rightWall = Bodies.rectangle(width + 25, height / 2, 50, height, { isStatic: true });
-
-
+    const leftWall = Bodies.rectangle(-25, height / 2, 50, height, { isStatic: true });
+    const rightWall = Bodies.rectangle(width + 25, height / 2, 50, height, { isStatic: true });
     World.add(world, [ground, leftWall, rightWall]);
 
     let currentFruit = null;
