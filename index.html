@@ -5,6 +5,10 @@
   <title>チイカゲーム</title>
    <audio id="bgm1" src="ひとりごつ.mp3" ></audio>
   <audio id="bgm2" src="パジャマパーティーズのうた.mp3" ></audio>
+  <audio id="mergeSound" src="けだま.m4a" preload="auto"></audio>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
   <style>
     body {
       margin: 0;
@@ -88,6 +92,15 @@
   font-size: 20px;
   color: #555;
 }
+#score {
+  font-size: 5vw;
+}
+
+#gameOverText {
+  font-size: 8vw;
+  padding: 4vw 6vw;
+}
+
 
 
 
@@ -109,12 +122,12 @@
   <script>
     const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
 
-    const width = 400;
-    const height = 600;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
     const gameOverY = 50;
 
     const fruitTypes = [
-    { radius: 30 ,image: 'ちいかぶ.png',imageSize:60 }, // ちいかぶ
+    { radius: 30 ,image: 'kani.png',imageSize:60 }, // ちいかぶ
     { radius: 35, image: 'tiikawa.png' },      // うさぎ
     { radius: 40, image: 'ハチげろ.png' },      // はちげろ
     { radius: 45, image: '泣き白.png' },      // 白泣き
@@ -130,17 +143,21 @@
     const engine = Engine.create();
     const world = engine.world;
 
-    const render = Render.create({
-      canvas: document.getElementById('gameCanvas'),
-      engine: engine,
-      options: {
-        width,
-        height,
-        wireframes: false,
+    
+
+const render = Render.create({
+  canvas: document.getElementById('gameCanvas'),
+  engine: engine,
+  options: {
+    width: width,
+    height: height,
+    wireframes: false,
         background: '#d0f0c0'
       }
     });
 
+
+    
     const bgm1 = document.getElementById('bgm1');
 const bgm2 = document.getElementById('bgm2');
 let currentBGM = 1;
@@ -290,12 +307,19 @@ document.addEventListener('click', () => {
       const type = f1.fruitType;
       if (type !== f2.fruitType) return;
 
-      if (type === fruitTypes.length - 1) {
-        World.remove(world, f1);
-        World.remove(world, f2);
-        addScore(100);
-        return;
-      }
+  // 🎵 効果音を鳴らす！
+  const sound = mergeSounds[type];
+  if (sound) {
+    sound.currentTime = 0;
+    sound.play();
+  }
+
+  if (type === fruitTypes.length - 1) {
+    World.remove(world, f1);
+    World.remove(world, f2);
+    addScore(100);
+    return;
+  }
 
       const newType = type + 1;
       const { radius, image } = fruitTypes[newType];
@@ -381,7 +405,7 @@ const evolutionChart = document.getElementById('evolutionChart');
 
 // 画像ファイル名のリスト（進化順）
 const fruitImages = [
-  'ちいかぶ.png',
+  'kani.png',
   'tiikawa.png',
   'ハチげろ.png',
   '泣き白.png',
@@ -413,6 +437,30 @@ function updateEvolutionChart() {
 
 
 updateEvolutionChart();
+
+const mergeSounds = [
+  new Audio('はあ.m4a'),
+  new Audio('けだま.m4a'),
+  new Audio('chiikawa-iya.mp3'),
+  new Audio('饅頭.m4a'),
+  new Audio('らっこ.m4a'),
+  new Audio('モモンガ.m4a'),
+  new Audio('しさ.m4a'),
+  new Audio('いやーはー.m4a'),
+  new Audio('なんとかなれ.m4a'),
+  new Audio('ちいかわ.m4a')
+];
+
+
+function handleInput(e) {
+  if (currentFruit && !isWaiting && !gameOver) {
+    const rect = render.canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    Body.setPosition(currentFruit, { x, y: currentFruit.position.y });
+    dropFruit();
+  }
+}
+
 
 
   </script>
