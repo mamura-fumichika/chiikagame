@@ -1,11 +1,11 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <title>チイカゲーム</title>
    <audio id="bgm1" src="ひとりごつ.mp3" ></audio>
   <audio id="bgm2" src="パジャマパーティーズのうた.mp3" ></audio>
-  <audio id="mergeSound" src="けだま.m4a" preload="auto"></audio>
+  
 
   <style>
     body {
@@ -89,14 +89,6 @@
 .evo-arrow {
   font-size: 20px;
   color: #555;
-}
-#score {
-  font-size: 5vw;
-}
-
-#gameOverText {
-  font-size: 8vw;
-  padding: 4vw 6vw;
 }
 
 
@@ -443,15 +435,6 @@ const mergeSounds = [
   new Audio('なんとかなれ.m4a'),
   new Audio('ちいかわ.m4a')
 ];
-
-function handleInput(e) {
-  if (currentFruit && !isWaiting && !gameOver) {
-    const rect = render.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    Body.setPosition(currentFruit, { x, y: currentFruit.position.y });
-    dropFruit();
-  }
-}
 
 
 
