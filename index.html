@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -6,8 +6,6 @@
    <audio id="bgm1" src="ひとりごつ.mp3" ></audio>
   <audio id="bgm2" src="パジャマパーティーズのうた.mp3" ></audio>
   <audio id="mergeSound" src="けだま.m4a" preload="auto"></audio>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 
   <style>
     body {
@@ -104,7 +102,6 @@
 
 
 
-
   </style>
 </head>
 <body>
@@ -122,8 +119,8 @@
   <script>
     const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const width = 400;
+    const height = 600;
     const gameOverY = 50;
 
     const fruitTypes = [
@@ -143,21 +140,17 @@
     const engine = Engine.create();
     const world = engine.world;
 
-    
-
-const render = Render.create({
-  canvas: document.getElementById('gameCanvas'),
-  engine: engine,
-  options: {
-    width: width,
-    height: height,
-    wireframes: false,
+    const render = Render.create({
+      canvas: document.getElementById('gameCanvas'),
+      engine: engine,
+      options: {
+        width,
+        height,
+        wireframes: false,
         background: '#d0f0c0'
       }
     });
 
-
-    
     const bgm1 = document.getElementById('bgm1');
 const bgm2 = document.getElementById('bgm2');
 let currentBGM = 1;
@@ -450,7 +443,6 @@ const mergeSounds = [
   new Audio('なんとかなれ.m4a'),
   new Audio('ちいかわ.m4a')
 ];
-
 
 function handleInput(e) {
   if (currentFruit && !isWaiting && !gameOver) {
