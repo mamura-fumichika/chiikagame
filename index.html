@@ -5,7 +5,9 @@
   <title>チイカゲーム</title>
    <audio id="bgm1" src="ひとりごつ.mp3" ></audio>
   <audio id="bgm2" src="パジャマパーティーズのうた.mp3" ></audio>
-  
+  <audio id="mergeSound" src="けだま.m4a" preload="auto"></audio>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 
   <style>
     body {
@@ -91,6 +93,15 @@
   color: #555;
 }
 
+#score {
+  font-size: 5vw;
+}
+
+#gameOverText {
+  font-size: 8vw;
+  padding: 4vw 6vw;
+}
+
 
 
 
@@ -111,8 +122,9 @@
   <script>
     const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
 
-    const width = 400;
-    const height = 600;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
     const gameOverY = 50;
 
     const fruitTypes = [
@@ -133,11 +145,11 @@
     const world = engine.world;
 
     const render = Render.create({
-      canvas: document.getElementById('gameCanvas'),
-      engine: engine,
-      options: {
-        width,
-        height,
+        canvas: document.getElementById('gameCanvas'),
+        engine: engine,
+        options: {
+        width: width,
+        height: height,
         wireframes: false,
         background: '#d0f0c0'
       }
@@ -187,6 +199,7 @@ document.addEventListener('click', () => {
     const ground = Bodies.rectangle(width / 2, height + 25, width, 50, { isStatic: true });
     const leftWall = Bodies.rectangle(-25, height / 2, 50, height, { isStatic: true });
     const rightWall = Bodies.rectangle(width + 25, height / 2, 50, height, { isStatic: true });
+
     World.add(world, [ground, leftWall, rightWall]);
 
     let currentFruit = null;
