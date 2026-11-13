@@ -352,11 +352,21 @@ document.addEventListener('click', () => {
       }
     });
 
-   render.canvas.addEventListener('click', (e) => {
+   // PCのクリックもスマホのタップも両方対応させる
+    render.canvas.addEventListener('pointerdown', (e) => {
       if (currentFruit && !isWaiting && !gameOver) {
         const rect = render.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        Body.setPosition(currentFruit, { x, y: currentFruit.position.y });
+        
+        // 実際の表示幅と、ゲーム内部の幅（400）の比率を計算して座標を補正する
+        const scaleX = width / rect.width; 
+        let x = (e.clientX - rect.left) * scaleX;
+
+        // 果物が壁にめり込まないように左右の限界値を設定
+        const radius = currentFruit.circleRadius;
+        if (x < radius) x = radius;
+        if (x > width - radius) x = width - radius;
+
+        Body.setPosition(currentFruit, { x: x, y: currentFruit.position.y });
         dropFruit();
       }
     });
@@ -441,4 +451,3 @@ const mergeSounds = [
   </script>
 </body>
 </html>
-
