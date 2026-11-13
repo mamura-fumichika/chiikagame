@@ -87,22 +87,35 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px; /* スマホ向けに隙間を少し狭く調整 */
   background: rgba(255, 255, 255, 0.8);
   padding: 6px 12px;
   border-radius: 8px;
   z-index: 10;
+  
+  /* ▼ ここからスマホ見切れ対策 ▼ */
+  width: 90%; /* 画面幅の90%までに制限して見切れを防ぐ */
+  max-width: 600px;
+  overflow-x: auto; /* はみ出た部分は横にスクロール可能にする */
+  -webkit-overflow-scrolling: touch; /* スマホでのスクロールを滑らかにする */
+}
+
+/* スクロールバーを非表示にする（スワイプはできるが見た目がスッキリする） */
+#evolutionChart::-webkit-scrollbar {
+  display: none;
 }
 
 .evo-icon {
-  width: 40px;
-  height: 40px;
+  width: 35px; /* スマホ向けに少しだけ小さく（元40px） */
+  height: 35px;
   object-fit: contain;
+  flex-shrink: 0; /* ▼ 画面が狭くても画像が潰れるのを防ぐ ▼ */
 }
 
 .evo-arrow {
-  font-size: 20px;
+  font-size: 16px; /* 矢印も少し小さく */
   color: #555;
+  flex-shrink: 0; /* ▼ 矢印が潰れるのを防ぐ ▼ */
 }
 
 
