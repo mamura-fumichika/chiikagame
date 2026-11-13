@@ -101,21 +101,56 @@
 }
 
 /* スクロールバーを非表示にする（スワイプはできるが見た目がスッキリする） */
-#evolutionChart::-webkit-scrollbar {
-  display: none;
+/* ▼ 共通・PC向け（全部まとめて表示） ▼ */
+#evolutionChart {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 6px 12px;
+  border-radius: 8px;
+  z-index: 10;
+  white-space: nowrap;
 }
 
 .evo-icon {
-  width: 35px; /* スマホ向けに少しだけ小さく（元40px） */
-  height: 35px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
-  flex-shrink: 0; /* ▼ 画面が狭くても画像が潰れるのを防ぐ ▼ */
+  flex-shrink: 0; /* 画像の潰れを防止 */
 }
 
 .evo-arrow {
-  font-size: 16px; /* 矢印も少し小さく */
+  font-size: 20px;
   color: #555;
-  flex-shrink: 0; /* ▼ 矢印が潰れるのを防ぐ ▼ */
+  flex-shrink: 0;
+}
+
+/* ▼ スマホ向け（画面幅が800px以下の場合のみ上書き適用） ▼ */
+@media (max-width: 800px) {
+  #evolutionChart {
+    width: 90%; 
+    gap: 5px; /* 隙間を狭くする */
+    overflow-x: auto; /* 横スクロール可能にする */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  #evolutionChart::-webkit-scrollbar {
+    display: none; /* スクロールバーを隠す */
+  }
+
+  .evo-icon {
+    width: 35px; /* スマホでは少し小さく */
+    height: 35px;
+  }
+
+  .evo-arrow {
+    font-size: 16px;
+  }
 }
 
 
