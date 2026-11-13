@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>チイカゲーム</title>
    <audio id="bgm1" src="ひとりごつ.mp3" ></audio>
   <audio id="bgm2" src="パジャマパーティーズのうた.mp3" ></audio>
@@ -19,6 +20,19 @@
       background: #05f019;
       border: 2px solid #333;
     }
+     #gameCanvas {
+  display: block;
+  margin: 0 auto;
+  background: #05f019;
+  border: 2px solid #333;
+  
+  /* ▼ ここからレスポンシブ用の追加 ▼ */
+  width: 100%;            /* 画面幅に合わせる */
+  max-width: 400px;       /* ただし最大400px（PC版のサイズ）まで */
+  height: auto;           /* 高さは自動調整 */
+  aspect-ratio: 2 / 3;    /* 縦横比を400:600（2:3）に固定 */
+  touch-action: none;     /* スマホでスワイプした時の画面スクロールを防ぐ */
+}
     #ui {
       position: absolute;
       top: 10px;
