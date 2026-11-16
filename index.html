@@ -2,514 +2,101 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>チイカゲーム</title>
-   <audio id="bgm1" src="ひとりごつ.mp3" ></audio>
-  <audio id="bgm2" src="パジャマパーティーズのうた.mp3" ></audio>
-  <audio id="mergeSound" src="けだま.m4a" preload="auto"></audio>
-
+  <title>ちいかゲーム</title>
   <style>
     body {
       margin: 0;
-      background: #caedf8;
-      overflow: hidden;
+      /* チイカゲームと同じ水色の背景 */
+      background: #caedf8; 
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 50px 20px;
     }
-    canvas {
-      display: block;
-      margin: 0 auto;
-      background: #05f019;
-      border: 2px solid #333;
-    }
-     #gameCanvas {
-  display: block;
-  margin: 0 auto;
-  background: #05f019;
-  border: 2px solid #333;
-  
-  /* ▼ ここからレスポンシブ用の追加 ▼ */
-  width: 100%;            /* 画面幅に合わせる */
-  max-width: 400px;       /* ただし最大400px（PC版のサイズ）まで */
-  height: auto;           /* 高さは自動調整 */
-  aspect-ratio: 2 / 3;    /* 縦横比を400:600（2:3）に固定 */
-  touch-action: none;     /* スマホでスワイプした時の画面スクロールを防ぐ */
-}
-    #ui {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-family: sans-serif;
-      font-size: 20px;
+    
+    h1 {
       color: #333;
-      z-index: 10;
+      font-size: 36px;
+      margin-bottom: 40px;
+      text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+      letter-spacing: 2px;
     }
-    #restart {
-      margin-top: 10px;
-      padding: 5px 10px;
-      font-size: 16px;
+
+    .game-container {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
-    #nextCanvas {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      border: 1px solid #aaa;
+
+    .game-card {
       background: #fff;
+      border-radius: 24px;
+      width: 260px;
+      padding: 24px;
+      text-align: center;
+      text-decoration: none;
+      color: #333;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+      border: 4px solid transparent;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     }
-    #gameOverText {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 400px;
-  height: 300px;
-  background-image: url('失敗.jpg'); /* ← 好きな画像に変更！ */
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  display: none;
-  z-index: 20;
-  border: 4px solid red;
-  border-radius: 10px;
-  padding: 0;
-  color: rgb(248, 55, 7);
-  font-size: 40px;
-  font-weight: bold;
-  text-align: right;
-  display: none;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding: 10px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
-}
-#evolutionChart {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 5px; /* スマホ向けに隙間を少し狭く調整 */
-  background: rgba(255, 255, 255, 0.8);
-  padding: 6px 12px;
-  border-radius: 8px;
-  z-index: 10;
-  
-  /* ▼ ここからスマホ見切れ対策 ▼ */
-  width: 90%; /* 画面幅の90%までに制限して見切れを防ぐ */
-  max-width: 600px;
-  overflow-x: auto; /* はみ出た部分は横にスクロール可能にする */
-  -webkit-overflow-scrolling: touch; /* スマホでのスクロールを滑らかにする */
-}
 
-/* スクロールバーを非表示にする（スワイプはできるが見た目がスッキリする） */
-/* ▼ 共通・PC向け（全部まとめて表示） ▼ */
-#evolutionChart {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 6px 12px;
-  border-radius: 8px;
-  z-index: 10;
-  white-space: nowrap;
-}
+    /* マウスを乗せた時のフワッと浮くアニメーション */
+    .game-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+      border-color: #05f019; /* ホバー時にチイカゲームの黄緑色に光る */
+    }
 
-.evo-icon {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  flex-shrink: 0; /* 画像の潰れを防止 */
-}
+    .game-icon {
+      width: 160px;
+      height: 160px;
+      object-fit: contain;
+      margin: 0 auto 15px;
+      display: block;
+    }
 
-.evo-arrow {
-  font-size: 20px;
-  color: #555;
-  flex-shrink: 0;
-}
+    .game-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #ff6b6b; /* タイトルを少しポップな色に */
+    }
 
-/* ▼ スマホ向け（画面幅が800px以下の場合のみ上書き適用） ▼ */
-@media (max-width: 800px) {
-  #evolutionChart {
-    width: 90%; 
-    gap: 5px; /* 隙間を狭くする */
-    overflow-x: auto; /* 横スクロール可能にする */
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  #evolutionChart::-webkit-scrollbar {
-    display: none; /* スクロールバーを隠す */
-  }
-
-  .evo-icon {
-    width: 35px; /* スマホでは少し小さく */
-    height: 35px;
-  }
-
-  .evo-arrow {
-    font-size: 16px;
-  }
-}
-
-
-
-
+    .game-desc {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.5;
+      margin: 0;
+    }
   </style>
 </head>
 <body>
-  <div id="ui">
-    <div id="score">スコア: 0</div>
-    <button id="restart" style="display:none;">リスタート</button>
+
+  <h1>🎮 ちいかゲーム 🎮</h1>
+
+  <div class="game-container">
+    
+    <!-- ▼ 1つ目のゲーム（チイカゲーム）へのリンク ▼ -->
+    <!-- href="リンク先のファイル名" に設定します -->
+    <a href="chi-kagame.html" class="game-card">
+      <!-- サムネイル画像（例として tiikawa.png を指定） -->
+      <img src="ちいかゲーム.png" alt="チイカゲーム" class="game-icon">
+      <p class="game-title">ちいかゲーム</p>
+      <p class="game-desc">同じキャラをくっつけて進化させよう！討伐失敗ラインに気をつけて！</p>
+    </a>
+
+    <!-- ▼ 2つ目のゲームへのリンク ▼ -->
+    <a href="chi-ka_shima.html" class="game-card">
+      <!-- サムネイル画像（用意した画像の名前に変えてください） -->
+      <img src="ちいかゲーム島編.jpeg" alt="もう一つのゲーム" class="game-icon" onerror="this.src='https://via.placeholder.com/160x160?text=No+Image'">
+      <p class="game-title">ちいかゲーム 島編</p>
+      <p class="game-desc">同じキャラをくっつけて進化させよう！セイレーンから島を守ろう！</p>
+    </a>
+
   </div>
-  <div id="gameOverText">討伐失敗！</div>
-  <div id="evolutionChart"></div>
 
-  <canvas id="nextCanvas" width="80" height="80"></canvas>
-  <canvas id="gameCanvas" width="400" height="600"></canvas>
-
-  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
-  <script>
-    const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
-
-    const width = 400;
-    const height = 600;
-    const gameOverY = 50;
-
-    const fruitTypes = [
-    { radius: 30 ,image: 'kani.png',imageSize:60 }, // ちいかぶ
-    { radius: 35, image: 'tiikawa.png' },      // うさぎ
-    { radius: 40, image: 'ハチげろ.png' },      // はちげろ
-    { radius: 45, image: '泣き白.png' },      // 白泣き
-    { radius: 50, image: '饅頭.png' },      // 饅頭
-    { radius: 55, image: 'ラッコ.png' },      // ラッコ
-    { radius: 60, image: 'モモンガ.png' },      // モモンガ
-    { radius: 65, image: 'しさ.png' },      // しさ
-    { radius: 70, image: 'うさけつ.png' },      // うさけつ
-    { radius: 75, image: 'ハチハート.png' },      // ハチハート
-    { radius: 80, image: '白.png' }       // 白
-    ];
-
-    const engine = Engine.create();
-    const world = engine.world;
-
-    const render = Render.create({
-      canvas: document.getElementById('gameCanvas'),
-      engine: engine,
-      options: {
-        width,
-        height,
-        wireframes: false,
-        background: '#d0f0c0'
-      }
-    });
-
-    const bgm1 = document.getElementById('bgm1');
-const bgm2 = document.getElementById('bgm2');
-let currentBGM = 1;
-
-// 音量調整（必要なら）
-bgm1.volume = 0.3;
-bgm2.volume = 0.2;
-
-// 再生が終わったら次の曲へ
-bgm1.addEventListener('ended', () => {
-  currentBGM = 2;
-  bgm2.play();
-});
-bgm2.addEventListener('ended', () => {
-  currentBGM = 1;
-  bgm1.play();
-});
-
-// 最初のクリックで再生スタート
-document.addEventListener('click', () => {
-  if (currentBGM === 1 && bgm1.paused) {
-    bgm1.play().catch(() => {});
-  } else if (currentBGM === 2 && bgm2.paused) {
-    bgm2.play().catch(() => {});
-  }
-});
-
-
-document.addEventListener('click', () => {
-  if (bgm.paused) {
-    bgm.play().catch((e) => {
-      console.log('再生できませんでした:', e);
-    });
-  }
-});
-
-
-    Render.run(render);
-    const runner = Runner.create();
-    Runner.run(runner, engine);
-
-    const ground = Bodies.rectangle(width / 2, height + 25, width, 50, { isStatic: true });
-    const leftWall = Bodies.rectangle(-25, height / 2, 50, height, { isStatic: true });
-    const rightWall = Bodies.rectangle(width + 25, height / 2, 50, height, { isStatic: true });
-    World.add(world, [ground, leftWall, rightWall]);
-
-    let currentFruit = null;
-    let isWaiting = false;
-    let gameOver = false;
-    let score = 0;
-    const fruits = [];
-
-    const scoreDisplay = document.getElementById('score');
-    const restartButton = document.getElementById('restart');
-    const gameOverText = document.getElementById('gameOverText');
-
-    const nextCanvas = document.getElementById('nextCanvas');
-    const nextCtx = nextCanvas.getContext('2d');
-    let nextType = getRandomType();
-
-    function getRandomType() {
-      return Math.floor(Math.random() *5);
-    }
-
-    function drawNextFruit() {
-      const { radius, image } = fruitTypes[nextType];
-      const img = new Image();
-      img.src = image;
-      img.onload = () => {
-        nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-        const size = radius * 2;
-        nextCtx.drawImage(img, (80 - size) / 2, (80 - size) / 2, size, size);
-      };
-    }
-
-    function createFruit(x) {
-      const type = nextType;
-      nextType = getRandomType();
-      drawNextFruit();
-
-      const { radius, image } = fruitTypes[type];
-      const fruit = Bodies.circle(x, 80, radius, {
-        isStatic: true,
-        render: {
-          sprite: {
-            texture: image,
-            xScale: (radius * 2) / 60,
-            yScale: (radius * 2) / 60
-          }
-        }
-      });
-      fruit.fruitType = type;
-      currentFruit = fruit;
-      World.add(world, fruit);
-      isWaiting = false;
-    }
-
-    function dropFruit() {
-      if (currentFruit && !gameOver) {
-        Body.setStatic(currentFruit, false);
-        fruits.push(currentFruit);
-        currentFruit = null;
-        isWaiting = true;
-        setTimeout(() => {
-          if (!checkGameOver()) {
-            createFruit(width / 2);
-          }
-        }, 1000);
-      }
-    }
-
-    function addScore(points) {
-      score += points;
-      scoreDisplay.textContent = `スコア: ${score}`;
-    }
-
-    function checkGameOver() {
-      for (let fruit of fruits) {
-        if (fruit.position.y < gameOverY) {
-          gameOver = true;
-          restartButton.style.display = 'block';
-          gameOverText.style.display = 'block';
-          return true;
-        }
-      }
-      return false;
-    }
-
-    restartButton.addEventListener('click', () => {
-      for (let body of Composite.allBodies(world)) {
-        if (!body.isStatic) {
-          World.remove(world, body);
-        }
-      }
-      fruits.length = 0;
-      score = 0;
-      gameOver = false;
-      scoreDisplay.textContent = 'スコア: 0';
-      restartButton.style.display = 'none';
-      gameOverText.style.display = 'none';
-      nextType = getRandomType();
-      drawNextFruit();
-      createFruit(width / 2);
-    });
-
-    function mergeFruits(f1, f2) {
-      const type = f1.fruitType;
-      if (type !== f2.fruitType) return;
-
-  // 🎵 効果音を鳴らす！
-  const sound = mergeSounds[type];
-  if (sound) {
-    sound.currentTime = 0;
-    sound.play();
-  }
-
-  if (type === fruitTypes.length - 1) {
-    World.remove(world, f1);
-    World.remove(world, f2);
-    addScore(100);
-    return;
-  }
-
-      const newType = type + 1;
-      const { radius, image } = fruitTypes[newType];
-      const newX = (f1.position.x + f2.position.x) / 2;
-      const newY = (f1.position.y + f2.position.y) / 2;
-
-      const newFruit = Bodies.circle(newX, newY, radius, {
-        restitution: 0.2,
-        render: {
-          sprite: {
-            texture: image,
-            xScale: (radius * 2) / 60,
-            yScale: (radius * 2) / 60
-          }
-        }
-      });
-
-      newFruit.fruitType = newType;
-      World.remove(world, f1);
-      World.remove(world, f2);
-      World.add(world, newFruit);
-      fruits.push(newFruit);
-
-      addScore((newType + 1) * 10);
-
-      if (!gameOver && !currentFruit && !isWaiting) {
-        isWaiting = true;
-        setTimeout(() => {
-          if (!checkGameOver()) {
-            createFruit(width / 2);
-          }
-        }, 1000);
-      }
-    }
-
-    Events.on(engine, 'collisionStart', (event) => {
-      const pairs = event.pairs;
-      for (let pair of pairs) {
-        const { bodyA, bodyB } = pair;
-        if (bodyA.fruitType !== undefined && bodyB.fruitType !== undefined) {
-          if (bodyA.fruitType === bodyB.fruitType) {
-            mergeFruits(bodyA, bodyB);
-          }
-        }
-      }
-    });
-
-   // PCのクリックもスマホのタップも両方対応させる
-    render.canvas.addEventListener('pointerdown', (e) => {
-      if (currentFruit && !isWaiting && !gameOver) {
-        const rect = render.canvas.getBoundingClientRect();
-        
-        // 実際の表示幅と、ゲーム内部の幅（400）の比率を計算して座標を補正する
-        const scaleX = width / rect.width; 
-        let x = (e.clientX - rect.left) * scaleX;
-
-        // 果物が壁にめり込まないように左右の限界値を設定
-        const radius = currentFruit.circleRadius;
-        if (x < radius) x = radius;
-        if (x > width - radius) x = width - radius;
-
-        Body.setPosition(currentFruit, { x: x, y: currentFruit.position.y });
-        dropFruit();
-      }
-    });
-
-    drawNextFruit();
-    createFruit(width / 2);
-
-    function drawGameOverLine(ctx, y) {
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(0, y);
-  ctx.lineTo(width, y);
-  ctx.strokeStyle = 'red';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5, 5]); // 点線にする
-  ctx.stroke();
-
-  // ラベルも表示したい場合
-  ctx.font = '16px sans-serif';
-  ctx.fillStyle = 'red';
-  ctx.fillText('討伐失敗ライン', 10, y + 18);
-  ctx.restore();
-}
-
-Events.on(render, 'afterRender', () => {
-  const ctx = render.context;
-  drawGameOverLine(ctx, gameOverY); // ← gameOverY は判定と同じ高さに！
-});
-
-const evolutionChart = document.getElementById('evolutionChart');
-
-// 画像ファイル名のリスト（進化順）
-const fruitImages = [
-  'kani.png',
-  'tiikawa.png',
-  'ハチげろ.png',
-  '泣き白.png',
-  '饅頭.png',
-  'ラッコ.png',
-  'モモンガ.png',
-  'しさ.png',
-  'うさけつ.png',
-  'ハチハート.png',
-  '白.png'
-];
-
-function updateEvolutionChart() {
-  evolutionChart.innerHTML = '';
-  for (let i = 0; i < fruitImages.length; i++) {
-    const img = document.createElement('img');
-    img.src = fruitImages[i];
-    img.className = 'evo-icon';
-    evolutionChart.appendChild(img);
-
-    if (i < fruitImages.length - 1) {
-      const arrow = document.createElement('span');
-      arrow.textContent = '→';
-      arrow.className = 'evo-arrow';
-      evolutionChart.appendChild(arrow);
-    }
-  }
-}
-
-
-updateEvolutionChart();
-
-const mergeSounds = [
-  new Audio('はあ.m4a'),
-  new Audio('けだま.m4a'),
-  new Audio('chiikawa-iya.mp3'),
-  new Audio('饅頭.m4a'),
-  new Audio('らっこ.m4a'),
-  new Audio('モモンガ.m4a'),
-  new Audio('しさ.m4a'),
-  new Audio('いやーはー.m4a'),
-  new Audio('なんとかなれ.m4a'),
-  new Audio('ちいかわ.m4a')
-];
-
-
-
-  </script>
 </body>
 </html>

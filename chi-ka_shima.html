@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ちいかゲーム 島編</title>
+  <audio id="bgm1" src="机さする.m4a" ></audio>
+  <audio id="bgm2" src="くつずれ.m4a" ></audio>
+  <audio id="bgm3" src="ウサギラップ.m4a" ></audio>
+  <audio id="mergeSound" src="けだま.m4a" preload="auto"></audio>
+
+  <style>
+    body {
+      margin: 0;
+      background: #caedf8;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #05f019;
+      border: 2px solid #333;
+    }
+    #gameCanvas {
+  display: block;
+  margin: 0 auto;
+  background: #05f019;
+  border: 2px solid #333;
+  
+  /* ▼ ここからレスポンシブ用の追加 ▼ */
+  width: 100%;            /* 画面幅に合わせる */
+  max-width: 400px;       /* ただし最大400px（PC版のサイズ）まで */
+  height: auto;           /* 高さは自動調整 */
+  aspect-ratio: 2 / 3;    /* 縦横比を400:600（2:3）に固定 */
+  touch-action: none;     /* スマホでスワイプした時の画面スクロールを防ぐ */
+}
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-family: sans-serif;
+      font-size: 20px;
+      color: #333;
+      z-index: 10;
+    }
+    #restart {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+    }
+    #nextCanvas {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border: 1px solid #aaa;
+      background: #fff;
+    }
+    #gameOverText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 300px;
+  background-image: url('檻.jpg'); /* ← 好きな画像に変更！ */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: none;
+  z-index: 20;
+  border: 4px solid red;
+  border-radius: 10px;
+  padding: 0;
+  color: rgb(248, 55, 7);
+  font-size: 40px;
+  font-weight: bold;
+  text-align: right;
+  display: none;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+}
+/* ▼ 共通・PC向け（全部まとめて表示） ▼ */
+#evolutionChart {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 6px 12px;
+  border-radius: 8px;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.evo-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0; /* 画像の潰れを防止 */
+}
+
+.evo-arrow {
+  font-size: 20px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+/* ▼ スマホ向け（画面幅が800px以下の場合のみ上書き適用） ▼ */
+@media (max-width: 800px) {
+  #evolutionChart {
+    width: 90%; 
+    gap: 5px; /* 隙間を狭くする */
+    overflow-x: auto; /* 横スクロール可能にする */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  #evolutionChart::-webkit-scrollbar {
+    display: none; /* スクロールバーを隠す */
+  }
+
+  .evo-icon {
+    width: 35px; /* スマホでは少し小さく */
+    height: 35px;
+  }
+
+  .evo-arrow {
+    font-size: 16px;
+  }
+}
+#backToTitle {
+      margin-bottom: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #fff;
+      border: 1px solid #333;
+      border-radius: 4px;
+    }
+    
+    /* マウスを乗せた時に少し色を変える */
+    #backToTitle:hover {
+      background-color: #f0f0f0;
+    }
+
+
+
+
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <button id="backToTitle">タイトルへ戻る</button>
+    <div id="score">スコア: 0</div>
+    <button id="restart" style="display:none;">リスタート</button>
+  </div>
+  <div id="gameOverText">討伐失敗！</div>
+  <div id="evolutionChart"></div>
+
+  <canvas id="nextCanvas" width="80" height="80"></canvas>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+  <script>
+    const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
+
+    const width = 400;
+    const height = 600;
+    const gameOverY = 50;
+
+   const fruitTypes = [
+  { radius: 31, imageSize: 70,  sourceSize: 350, image: 'kani＿島.png' },
+  { radius: 34, imageSize: 80,  sourceSize: 350, image: 'tiikawa＿島.png' },
+  { radius: 39, imageSize: 90,  sourceSize: 350, image: 'ハチワレ＿島.png' },
+  { radius: 43, imageSize: 100,  sourceSize: 350, image: 'ウサギ＿島.png' },
+  { radius: 47, imageSize: 110, sourceSize: 350, image: '饅頭＿島.png' },
+  { radius: 51, imageSize: 120, sourceSize: 350, image: 'ラッコ＿島.png' },
+  { radius: 55, imageSize: 130, sourceSize: 350, image: 'モモンガ＿島.png' },
+  { radius: 59, imageSize: 140, sourceSize: 350, image: 'しさ＿島.png' },
+  { radius: 63, imageSize: 150, sourceSize: 430, image: 'hitofuta.png' },
+  { radius: 67, imageSize: 160, sourceSize: 400, image: 'simajiro.png' },
+  { radius: 71, imageSize: 170, sourceSize: 370, image: 'seire-n.png' }
+];
+
+    const engine = Engine.create();
+    const world = engine.world;
+
+    const render = Render.create({
+      canvas: document.getElementById('gameCanvas'),
+      engine: engine,
+      options: {
+        width,
+        height,
+        wireframes: false,
+        background: '#d0f0c0'
+      }
+    });
+
+    const bgm1 = document.getElementById('bgm1');
+    const bgm2 = document.getElementById('bgm2');
+const bgm3 = document.getElementById('bgm3');
+let currentBGM = 1;
+
+// 音量調整（必要なら）
+bgm1.volume = 0.3;
+bgm2.volume = 0.2;
+
+// 再生が終わったら次の曲へ
+bgm1.addEventListener('ended', () => {
+  currentBGM = 2;
+  bgm2.play();
+});
+bgm2.addEventListener('ended', () => {
+  currentBGM = 3;
+  bgm3.play();
+});
+bgm3.addEventListener('ended', () => {
+  currentBGM = 1;
+  bgm1.play();
+});
+
+// 最初のクリックで再生スタート
+document.addEventListener('click', () => {
+  if (currentBGM === 1 && bgm1.paused) {
+    bgm1.play().catch(() => {});
+  } else if (currentBGM === 2 && bgm2.paused) {
+    bgm2.play().catch(() => {});
+  } else if (currentBGM === 3 && bgm3.paused) {
+    bgm3.play().catch(() => {});
+  }
+});
+
+
+document.addEventListener('click', () => {
+  if (bgm.paused) {
+    bgm.play().catch((e) => {
+      console.log('再生できませんでした:', e);
+    });
+  }
+});
+
+
+    Render.run(render);
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+
+    const ground = Bodies.rectangle(width / 2, height + 25, width, 50, { isStatic: true });
+    const leftWall = Bodies.rectangle(-25, height / 2, 50, height, { isStatic: true });
+    const rightWall = Bodies.rectangle(width + 25, height / 2, 50, height, { isStatic: true });
+    World.add(world, [ground, leftWall, rightWall]);
+
+    let currentFruit = null;
+    let isWaiting = false;
+    let gameOver = false;
+    let score = 0;
+    const fruits = [];
+
+    const scoreDisplay = document.getElementById('score');
+    const restartButton = document.getElementById('restart');
+    const gameOverText = document.getElementById('gameOverText');
+
+    const nextCanvas = document.getElementById('nextCanvas');
+    const nextCtx = nextCanvas.getContext('2d');
+    let nextType = getRandomType();
+
+    function getRandomType() {
+      return Math.floor(Math.random() *5);
+    }
+
+    function drawNextFruit() {
+  const { image, imageSize } = fruitTypes[nextType];
+
+  const img = new Image();
+  img.src = image;
+
+  img.onload = () => {
+    nextCtx.clearRect(
+      0,
+      0,
+      nextCanvas.width,
+      nextCanvas.height
+    );
+
+    const previewSize = Math.min(imageSize, 70);
+
+    nextCtx.drawImage(
+      img,
+      (nextCanvas.width - previewSize) / 2,
+      (nextCanvas.height - previewSize) / 2,
+      previewSize,
+      previewSize
+    );
+  };
+}
+
+    function createFruit(x) {
+      const type = nextType;
+      nextType = getRandomType();
+      drawNextFruit();
+
+    const {
+      radius,
+      image,
+      imageSize,
+      sourceSize
+    } = fruitTypes[type];
+
+    const fruit = Bodies.circle(x, 80, radius, {
+      isStatic: true,
+      restitution: 0.2,
+      friction: 0.1,
+
+      render: {
+        sprite: {
+          texture: image,
+          xScale: imageSize / sourceSize,
+          yScale: imageSize / sourceSize
+       }
+      }
+    });
+
+  fruit.fruitType = type;
+  currentFruit = fruit;
+  World.add(world, fruit);
+  isWaiting = false;
+}
+
+    function dropFruit() {
+      if (currentFruit && !gameOver) {
+        Body.setStatic(currentFruit, false);
+        fruits.push(currentFruit);
+        currentFruit = null;
+        isWaiting = true;
+        setTimeout(() => {
+          if (!checkGameOver()) {
+            createFruit(width / 2);
+          }
+        }, 1000);
+      }
+    }
+
+    function addScore(points) {
+      score += points;
+      scoreDisplay.textContent = `スコア: ${score}`;
+    }
+
+    function checkGameOver() {
+      for (let fruit of fruits) {
+        if (fruit.position.y < gameOverY) {
+          gameOver = true;
+          restartButton.style.display = 'block';
+          gameOverText.style.display = 'block';
+          return true;
+        }
+      }
+      return false;
+    }
+
+    restartButton.addEventListener('click', () => {
+      for (let body of Composite.allBodies(world)) {
+        if (!body.isStatic) {
+          World.remove(world, body);
+        }
+      }
+      fruits.length = 0;
+      score = 0;
+      gameOver = false;
+      scoreDisplay.textContent = 'スコア: 0';
+      restartButton.style.display = 'none';
+      gameOverText.style.display = 'none';
+      nextType = getRandomType();
+      drawNextFruit();
+      createFruit(width / 2);
+    });
+
+    function mergeFruits(f1, f2) {
+      const type = f1.fruitType;
+      if (type !== f2.fruitType) return;
+
+  // 🎵 効果音を鳴らす！
+  const sound = mergeSounds[type];
+  if (sound) {
+    sound.currentTime = 0;
+    sound.play();
+  }
+
+  if (type === fruitTypes.length - 1) {
+    World.remove(world, f1);
+    World.remove(world, f2);
+    addScore(100);
+    return;
+  }
+
+      const newType = type + 1;
+
+const {
+  radius,
+  image,
+  imageSize,
+  sourceSize
+} = fruitTypes[newType];
+
+const newX = (f1.position.x + f2.position.x) / 2;
+const newY = (f1.position.y + f2.position.y) / 2;
+
+const newFruit = Bodies.circle(newX, newY, radius, {
+  restitution: 0.2,
+  friction: 0.1,
+
+  render: {
+    sprite: {
+      texture: image,
+      xScale: imageSize / sourceSize,
+      yScale: imageSize / sourceSize
+    }
+  }
+});
+
+      newFruit.fruitType = newType;
+      World.remove(world, f1);
+      World.remove(world, f2);
+      World.add(world, newFruit);
+      fruits.push(newFruit);
+
+      addScore((newType + 1) * 10);
+
+      if (!gameOver && !currentFruit && !isWaiting) {
+        isWaiting = true;
+        setTimeout(() => {
+          if (!checkGameOver()) {
+            createFruit(width / 2);
+          }
+        }, 1000);
+      }
+    }
+
+    Events.on(engine, 'collisionStart', (event) => {
+      const pairs = event.pairs;
+      for (let pair of pairs) {
+        const { bodyA, bodyB } = pair;
+        if (bodyA.fruitType !== undefined && bodyB.fruitType !== undefined) {
+          if (bodyA.fruitType === bodyB.fruitType) {
+            mergeFruits(bodyA, bodyB);
+          }
+        }
+      }
+    });
+
+   // PCのクリックもスマホのタップも両方対応させる
+    render.canvas.addEventListener('pointerdown', (e) => {
+      if (currentFruit && !isWaiting && !gameOver) {
+        const rect = render.canvas.getBoundingClientRect();
+        
+        // 実際の表示幅と、ゲーム内部の幅（400）の比率を計算して座標を補正する
+        const scaleX = width / rect.width; 
+        let x = (e.clientX - rect.left) * scaleX;
+
+        // 果物が壁にめり込まないように左右の限界値を設定
+        const radius = currentFruit.circleRadius;
+        if (x < radius) x = radius;
+        if (x > width - radius) x = width - radius;
+
+        Body.setPosition(currentFruit, { x: x, y: currentFruit.position.y });
+        dropFruit();
+      }
+    });
+
+    drawNextFruit();
+    createFruit(width / 2);
+
+    function drawGameOverLine(ctx, y) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(0, y);
+  ctx.lineTo(width, y);
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]); // 点線にする
+  ctx.stroke();
+
+  // ラベルも表示したい場合
+  ctx.font = '16px sans-serif';
+  ctx.fillStyle = 'red';
+  ctx.fillText('討伐失敗ライン', 10, y + 18);
+  ctx.restore();
+}
+
+Events.on(render, 'afterRender', () => {
+  const ctx = render.context;
+  drawGameOverLine(ctx, gameOverY); // ← gameOverY は判定と同じ高さに！
+});
+
+const evolutionChart = document.getElementById('evolutionChart');
+
+// 画像ファイル名のリスト（進化順）
+const fruitImages = [
+  'kani＿島.png',
+  'tiikawa＿島.png',
+  'ハチワレ＿島.png',
+  'ウサギ＿島.png',
+  '饅頭＿島.png',
+  'ラッコ＿島.png',
+  'モモンガ＿島.png',
+  'しさ＿島.png',
+  'hitofuta.png',
+  'simajiro.png',
+  'seire-n.png'
+];
+
+function updateEvolutionChart() {
+  evolutionChart.innerHTML = '';
+  for (let i = 0; i < fruitImages.length; i++) {
+    const img = document.createElement('img');
+    img.src = fruitImages[i];
+    img.className = 'evo-icon';
+    evolutionChart.appendChild(img);
+
+    if (i < fruitImages.length - 1) {
+      const arrow = document.createElement('span');
+      arrow.textContent = '→';
+      arrow.className = 'evo-arrow';
+      evolutionChart.appendChild(arrow);
+    }
+  }
+}
+
+
+updateEvolutionChart();
+
+const mergeSounds = [
+  new Audio('ちいかわ＿島.m4a'),
+  new Audio('ハチワレ＿島.m4a'),
+  new Audio('うさぎ＿島.m4a'),
+  new Audio('饅頭＿島.m4a'),
+  new Audio('ラッコ＿島.m4a'),
+  new Audio('モモンガ＿島.m4a'),
+  new Audio('しさ＿島.m4a'),
+  new Audio('ひとふた.m4a'),
+  new Audio('島次郎.m4a'),
+  new Audio('セイレーン.m4a')
+];
+
+// ▼ タイトルへ戻るボタンの処理 ▼
+const backToTitleButton = document.getElementById('backToTitle');
+backToTitleButton.addEventListener('click', () => {
+  // 新しく作ったトップページのファイル名（index.html）を指定して移動
+  window.location.href = 'index.html';
+});
+
+
+  </script>
+</body>
+</html>
