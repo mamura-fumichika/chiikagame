@@ -148,7 +148,126 @@
     }
 
 
+#rankingPanel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 
+  display: none;
+  width: min(360px, calc(100% - 40px));
+  max-height: 85vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.97);
+  border: 3px solid #ff8c00;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+
+  font-family: sans-serif;
+  color: #333;
+  z-index: 30;
+}
+
+#rankingPanel h2 {
+  margin: 0 0 15px;
+  color: #ef6c00;
+  text-align: center;
+}
+
+#scoreRegistration {
+  padding-bottom: 15px;
+  border-bottom: 1px solid #ccc;
+}
+
+#finalScore {
+  margin: 5px 0 12px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+#playerName {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+
+  margin: 6px 0 10px;
+  padding: 10px;
+
+  border: 1px solid #888;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+#submitScore,
+#closeRanking {
+  width: 100%;
+  padding: 10px;
+
+  border: none;
+  border-radius: 7px;
+  background: #ff9800;
+  color: white;
+
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#submitScore:disabled {
+  background: #aaa;
+  cursor: default;
+}
+
+#closeRanking {
+  margin-top: 12px;
+  background: #607d8b;
+}
+
+#rankingMessage {
+  min-height: 1.5em;
+  margin: 8px 0 0;
+
+  color: #d84315;
+  font-size: 14px;
+  text-align: center;
+}
+
+#rankingList {
+  margin: 15px 0 5px;
+  padding-left: 32px;
+}
+
+#rankingList li {
+  padding: 5px 3px;
+  font-size: 16px;
+}
+
+#rankingList li:nth-child(1) {
+  color: #d4a000;
+  font-size: 19px;
+  font-weight: bold;
+}
+
+#rankingList li:nth-child(2) {
+  color: #777;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#rankingList li:nth-child(3) {
+  color: #a0522d;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.ranking-score {
+  float: right;
+  font-weight: bold;
+}
 
   </style>
 </head>
@@ -159,13 +278,57 @@
     <button id="restart" style="display:none;">リスタート</button>
   </div>
   <div id="gameOverText">討伐失敗！</div>
-  <div id="evolutionChart"></div>
+
+<div id="rankingPanel">
+  <h2>オンラインランキング</h2>
+
+  <div id="scoreRegistration">
+    <p id="finalScore">今回のスコア: 0</p>
+
+    <label for="playerName">ニックネーム</label>
+
+    <input
+      id="playerName"
+      type="text"
+      maxlength="12"
+      autocomplete="off"
+      placeholder="12文字以内"
+    >
+
+    <button id="submitScore" type="button">
+      スコアを登録
+    </button>
+
+    <p id="rankingMessage"></p>
+  </div>
+
+  <ol id="rankingList">
+    <li>ランキングを読み込んでいます</li>
+  </ol>
+
+  <button id="closeRanking" type="button">
+    閉じる
+  </button>
+</div>
+
+<div id="evolutionChart"></div>
 
   <canvas id="nextCanvas" width="80" height="80"></canvas>
   <canvas id="gameCanvas" width="400" height="600"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    const SUPABASE_URL =
+  'https://xtjvnwztrwtbsbhmxsap.supabase.co';
+
+const SUPABASE_PUBLISHABLE_KEY =
+  'sb_publishable_Om44C9LjU0abrpY41lbW7A_p3MFLBzx';
+
+const rankingDatabase = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
     const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
 
     const width = 400;
@@ -262,6 +425,28 @@ document.addEventListener('click', () => {
     const scoreDisplay = document.getElementById('score');
     const restartButton = document.getElementById('restart');
     const gameOverText = document.getElementById('gameOverText');
+    const rankingPanel =
+  document.getElementById('rankingPanel');
+
+const finalScoreDisplay =
+  document.getElementById('finalScore');
+
+const playerNameInput =
+  document.getElementById('playerName');
+
+const submitScoreButton =
+  document.getElementById('submitScore');
+
+const closeRankingButton =
+  document.getElementById('closeRanking');
+
+const rankingList =
+  document.getElementById('rankingList');
+
+const rankingMessage =
+  document.getElementById('rankingMessage');
+
+let scoreSubmitted = false;
 
     const nextCanvas = document.getElementById('nextCanvas');
     const nextCtx = nextCanvas.getContext('2d');
@@ -349,33 +534,58 @@ document.addEventListener('click', () => {
     }
 
     function checkGameOver() {
-      for (let fruit of fruits) {
-        if (fruit.position.y < gameOverY) {
-          gameOver = true;
-          restartButton.style.display = 'block';
-          gameOverText.style.display = 'block';
-          return true;
-        }
-      }
-      return false;
+  if (gameOver) {
+    return true;
+  }
+
+  for (const fruit of fruits) {
+    if (fruit.position.y < gameOverY) {
+      gameOver = true;
+
+      restartButton.style.display = 'block';
+      gameOverText.style.display = 'block';
+
+      setTimeout(() => {
+        openRanking();
+      }, 800);
+
+      return true;
     }
+  }
+
+  return false;
+}
 
     restartButton.addEventListener('click', () => {
-      for (let body of Composite.allBodies(world)) {
-        if (!body.isStatic) {
-          World.remove(world, body);
-        }
-      }
-      fruits.length = 0;
-      score = 0;
-      gameOver = false;
-      scoreDisplay.textContent = 'スコア: 0';
-      restartButton.style.display = 'none';
-      gameOverText.style.display = 'none';
-      nextType = getRandomType();
-      drawNextFruit();
-      createFruit(width / 2);
-    });
+  for (const body of Composite.allBodies(world)) {
+    if (!body.isStatic) {
+      World.remove(world, body);
+    }
+  }
+
+  fruits.length = 0;
+  score = 0;
+  gameOver = false;
+  scoreSubmitted = false;
+
+  scoreDisplay.textContent = 'スコア: 0';
+
+  restartButton.style.display = 'none';
+  gameOverText.style.display = 'none';
+  rankingPanel.style.display = 'none';
+
+  rankingMessage.textContent = '';
+
+  playerNameInput.disabled = false;
+
+  submitScoreButton.disabled = false;
+  submitScoreButton.textContent = 'スコアを登録';
+
+  nextType = getRandomType();
+
+  drawNextFruit();
+  createFruit(width / 2);
+});
 
     function mergeFruits(f1, f2) {
       const type = f1.fruitType;
@@ -543,6 +753,201 @@ const mergeSounds = [
   new Audio('島次郎.m4a'),
   new Audio('セイレーン.m4a')
 ];
+function normalizePlayerName(value) {
+  return value
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 12);
+}
+
+function createRankingItem(rank, playerName, playerScore) {
+  const listItem = document.createElement('li');
+
+  const nameSpan = document.createElement('span');
+  nameSpan.textContent = `${rank}位　${playerName}`;
+
+  const scoreSpan = document.createElement('span');
+  scoreSpan.className = 'ranking-score';
+  scoreSpan.textContent = `${playerScore}点`;
+
+  listItem.appendChild(nameSpan);
+  listItem.appendChild(scoreSpan);
+
+  return listItem;
+}
+
+async function loadRanking() {
+  rankingMessage.textContent = '';
+  rankingList.innerHTML = '';
+
+  const loadingItem = document.createElement('li');
+  loadingItem.textContent = 'ランキングを読み込んでいます';
+  rankingList.appendChild(loadingItem);
+
+  try {
+    const { data, error } = await rankingDatabase
+      .from('scores')
+      .select('player_name, score, created_at')
+      .order('score', { ascending: false })
+      .order('created_at', { ascending: true })
+      .limit(10);
+
+    if (error) {
+      throw error;
+    }
+
+    rankingList.innerHTML = '';
+
+    if (!data || data.length === 0) {
+      const emptyItem = document.createElement('li');
+      emptyItem.textContent =
+        'まだスコアが登録されていません';
+      rankingList.appendChild(emptyItem);
+      return;
+    }
+
+    data.forEach((record, index) => {
+      const item = createRankingItem(
+        index + 1,
+        record.player_name,
+        record.score
+      );
+
+      rankingList.appendChild(item);
+    });
+  } catch (error) {
+    console.error('ランキング取得エラー:', error);
+
+    rankingList.innerHTML = '';
+
+    const errorItem = document.createElement('li');
+    errorItem.textContent =
+      'ランキングを読み込めませんでした';
+
+    rankingList.appendChild(errorItem);
+
+    rankingMessage.textContent =
+      '通信状況を確認して、もう一度お試しください。';
+  }
+}
+
+async function submitCurrentScore() {
+  if (scoreSubmitted) {
+    return;
+  }
+
+  const playerName =
+    normalizePlayerName(playerNameInput.value);
+
+  if (playerName.length === 0) {
+    rankingMessage.textContent =
+      'ニックネームを入力してください。';
+
+    playerNameInput.focus();
+    return;
+  }
+
+  if (!Number.isInteger(score)) {
+    rankingMessage.textContent =
+      'スコアの形式が正しくありません。';
+    return;
+  }
+
+  if (score < 0 || score > 1000000) {
+    rankingMessage.textContent =
+      '登録できないスコアです。';
+    return;
+  }
+
+  submitScoreButton.disabled = true;
+  rankingMessage.textContent =
+    'スコアを登録しています';
+
+  try {
+    const { error } = await rankingDatabase
+      .from('scores')
+      .insert({
+        player_name: playerName,
+        score: score
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    scoreSubmitted = true;
+
+    playerNameInput.value = playerName;
+    playerNameInput.disabled = true;
+
+    submitScoreButton.textContent = '登録済み';
+
+    rankingMessage.textContent =
+      'スコアを登録しました！';
+
+    localStorage.setItem(
+      'chiikaPlayerName',
+      playerName
+    );
+
+    await loadRanking();
+  } catch (error) {
+    console.error('スコア登録エラー:', error);
+
+    submitScoreButton.disabled = false;
+
+    rankingMessage.textContent =
+      '登録できませんでした。通信状況を確認してください。';
+  }
+}
+
+function openRanking() {
+  finalScoreDisplay.textContent =
+    `今回のスコア: ${score}点`;
+
+  rankingPanel.style.display = 'block';
+
+  rankingMessage.textContent = '';
+
+  const savedName =
+    localStorage.getItem('chiikaPlayerName');
+
+  if (savedName && !scoreSubmitted) {
+    playerNameInput.value = savedName.slice(0, 12);
+  }
+
+  if (!scoreSubmitted) {
+    playerNameInput.disabled = false;
+    submitScoreButton.disabled = false;
+    submitScoreButton.textContent = 'スコアを登録';
+  }
+
+  loadRanking();
+}
+
+function closeRanking() {
+  rankingPanel.style.display = 'none';
+}
+
+submitScoreButton.addEventListener(
+  'click',
+  submitCurrentScore
+);
+
+playerNameInput.addEventListener(
+  'keydown',
+  event => {
+    if (event.key === 'Enter') {
+      submitCurrentScore();
+    }
+  }
+);
+
+closeRankingButton.addEventListener(
+  'click',
+  closeRanking
+);
 
 // ▼ タイトルへ戻るボタンの処理 ▼
 const backToTitleButton = document.getElementById('backToTitle');
